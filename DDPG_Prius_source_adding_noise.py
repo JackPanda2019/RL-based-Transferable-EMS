@@ -10,7 +10,7 @@ from Prius_model_new import Prius_model
 import scipy.io as scio
 import matplotlib.pyplot as plt
 from Priority_Replay import Memory
-
+tf.disable_eager_execution()
 np.random.seed(1)
 tf.set_random_seed(1)
 
