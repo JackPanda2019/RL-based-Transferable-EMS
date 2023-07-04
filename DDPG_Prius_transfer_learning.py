@@ -4,19 +4,20 @@
 """
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import tensorflow.compat.v1 as tf
 import numpy as np
 from Prius_model_new import Prius_model
 import scipy.io as scio
 import matplotlib.pyplot as plt
+tf.disable_eager_execution()
 from Priority_Replay import Memory
-import tensorflow.contrib.slim as slim
+#import tensorflow.contrib.slim as slim
 
 np.random.seed(1)
 tf.set_random_seed(1)
 
-MAX_EPISODES = 300  # The max episode
+MAX_EPISODES = 30  # The max episode
 LR_A = 0.0009  # The learning rate of the actor network
 LR_C = 0.0009  # The learning rate of the critic network
 GAMMA = 0.9  # Reward discount
@@ -153,13 +154,20 @@ class DDPG(object):
     def load_partial_weights(self):
         for tv in tf.trainable_variables():
             print(tv.name)
-        variables_to_restore = slim.get_variables_to_restore(include=['Actor/eval/l1', 'Actor/eval/l2', 'Actor/eval/l3',
-                                                                      'Critic/eval/w1_s', 'Critic/eval/w1_a',
-                                                                      'Critic/eval/b1', 'Critic/eval/w2',
-                                                                      'Critic/eval/b2', 'Critic/eval/w3',
-                                                                      'Critic/eval/b3'])
+        
+        variables_to_restore = [var for var in tf.global_variables()
+                                if 'Actor/eval/l' in var.name or
+                                'Critic/eval/w1_s' in var.name or
+                                'Critic/eval/w1_a' in var.name or
+                                'Critic/eval/b1' in var.name or
+                                'Critic/eval/w2' in var.name or
+                                'Critic/eval/b2' in var.name or
+                                'Critic/eval/w3' in var.name or
+                                'Critic/eval/b3' in var.name]
+        
         self.saver = tf.train.Saver(variables_to_restore)
-        self.saver.restore(self.sess, os.path.join('Checkpoints/source', 'save_net.ckpt-999'))
+        self.saver.restore(self.sess, os.path.join('Checkpoints/source', 'save_net.ckpt-9'))
+
 
     def savemodel(self):
         self.saver = tf.train.Saver(max_to_keep=MAX_EPISODES)
