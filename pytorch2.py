@@ -260,8 +260,6 @@ def run_ddpg():
 
     mu1 = 0
     sigma1 = 0.03
-    threshold = 0.2
-    factor = 1.01
     Prius = Prius_model()
     for i in range(MAX_EPISODES):
         path = "Data_Standard Driving Cycles/Prius_source_data"
@@ -276,7 +274,6 @@ def run_ddpg():
         SOC_origin = SOC
         ep_reward = 0
         ep_reward_all = 0
-        mileage = 0
         step_episode += 1
         SOC_data = []
         P_req_list = []
