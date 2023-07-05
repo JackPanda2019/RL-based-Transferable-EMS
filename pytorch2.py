@@ -6,12 +6,18 @@ import matplotlib.pyplot as plt
 import os
 import scipy.io as scio
 from Prius_model_new import Prius_model
+from torch.utils.tensorboard import SummaryWriter
+import datetime
 
 device = torch.device("cuda")
+now = datetime.datetime.now()
+time_string = now.strftime("%Y-%m-%d_%H-%M-%S")
+log_dir = os.path.join("runs", time_string)
+writer = SummaryWriter(log_dir=log_dir)
 
-MAX_EPISODES = 1000
-LR_A = 0.001
-LR_C = 0.001
+MAX_EPISODES = 100
+LR_A = 0.0009
+LR_C = 0.0009
 GAMMA = 0.9
 TAU = 0.01
 MEMORY_CAPACITY = 50000
@@ -54,7 +60,9 @@ class Critic(nn.Module):
 
 
 class DDPG:
-    def __init__(self, state_dim, action_dim, action_bound):
+    def __init__(self, state_dim, action_dim, action_bound, writer):
+        self.writer = writer
+        self.global_step = 0
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.action_bound = action_bound
@@ -71,7 +79,7 @@ class DDPG:
         state = torch.FloatTensor(state).unsqueeze(0).to(device)
         with torch.no_grad():
             action = self.actor(state)
-        action = action.squeeze().detach()
+        action = action.squeeze().detach().cpu().numpy()
 
         return action
 
@@ -94,12 +102,12 @@ class DDPG:
         self.critic_optimizer.zero_grad()
         td_error.backward()
         self.critic_optimizer.step()
-
+        self.writer.add_scalar("Critic TD error", td_error.item(), self.global_step)
         a_loss = -self.critic(bs, self.actor(bs)).mean()
         self.actor_optimizer.zero_grad()
         a_loss.backward()
         self.actor_optimizer.step()
-
+        self.writer.add_scalar("Actor loss", a_loss.item(), self.global_step)
         for target_param, param in zip(
             self.actor_target.parameters(), self.actor.parameters()
         ):
@@ -112,6 +120,7 @@ class DDPG:
 
         abs_td_error = torch.abs(q_target - q_value).detach().cpu().numpy()
         self.memory.batch_update(tree_index, abs_td_error)
+        self.global_step += 1
 
     def store_transition(self, state, action, reward, next_state):
         transition = np.hstack((state, action, reward, next_state))
@@ -244,22 +253,18 @@ def run_ddpg():
     s_dim = 3
     a_dim = 1
     a_bound = 1
-    ddpg = DDPG(s_dim, a_dim, a_bound)
+    ddpg = DDPG(s_dim, a_dim, a_bound, writer)
     total_step = 0
     step_episode = 0
-    mean_reward_all = 0
     cost_Engine_list = []
     cost_all_list = []
     cost_Engine_100Km_list = []
     mean_reward_list = []
     std_reward_list = []
-    list_even = []
-    list_odd = []
-    mean_discrepancy_list = []
     SOC_final_list = []
 
     mu1 = 0
-    sigma1 = 0.03
+    sigma1 = 0.06
     Prius = Prius_model()
     for i in range(MAX_EPISODES):
         path = "Data_Standard Driving Cycles/Prius_source_data"
@@ -302,12 +307,11 @@ def run_ddpg():
         s[1] = (car_a - (-1.6114)) / (1.3034 - (-1.6114))
         s[2] = SOC
 
-        action_noise_type = "None"
         param_noise_scale = np.random.normal(mu1, sigma1)
-        param_noise_scale = 0
+        # param_noise_scale = 0
 
         for j in range(car_spd_one.shape[1] - 1):
-            print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
+            # print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
             action = ddpg.choose_action(s)
 
             if param_noise_scale > 0 and j == 0:
@@ -351,8 +355,10 @@ def run_ddpg():
             s_[1] = (car_a - (-1.6114)) / (1.3034 - (-1.6114))
             s_[2] = SOC_new
             ddpg.store_transition(s, action, r, s_)
-
+            # print(total_step)
             if total_step > MEMORY_CAPACITY:
+                # if total_step > 0:
+                # print("learn start")
                 ddpg.learn()
 
             s = s_
@@ -389,6 +395,9 @@ def run_ddpg():
                     / 0.72
                 )
                 cost_all_list.append(cost_all)
+                writer.add_scalar("Reward", -(ep_reward_all / 100), i)
+                writer.add_scalar("Engine Cost", cost_Engine, i)
+                writer.add_scalar("cost_all", cost_all, i)
                 print(
                     "Episode:",
                     i,
@@ -398,7 +407,7 @@ def run_ddpg():
                 )
 
         ddpg.savemodel()
-
+    writer.close()
     SOC_final_arr = np.array(SOC_final_list)
     np.savetxt("./soc.txt", SOC_final_arr)
     cost_Engine_arr = np.array(cost_Engine_list)

@@ -286,7 +286,7 @@ for i in range(MAX_EPISODES):
     param_noise_scale = np.random.normal(mu1, sigma1)
 
     for j in range(car_spd_one.shape[1] - 1):
-        print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
+        # print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
         action, action_no_noise = DDPG.choose_action(
             s, j, param_noise_scale, False, action_noise_type
         )
