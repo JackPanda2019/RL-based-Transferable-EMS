@@ -15,9 +15,9 @@ time_string = now.strftime("%Y-%m-%d_%H-%M-%S")
 log_dir = os.path.join("runs", time_string)
 writer = SummaryWriter(log_dir=log_dir)
 
-MAX_EPISODES = 100
-LR_A = 0.0009
-LR_C = 0.0009
+MAX_EPISODES = 1000
+LR_A = 0.001
+LR_C = 0.001
 GAMMA = 0.9
 TAU = 0.01
 MEMORY_CAPACITY = 50000
@@ -74,14 +74,50 @@ class DDPG:
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=LR_C)
         self.memory = Memory(MEMORY_CAPACITY)
         self.td_loss = nn.MSELoss()
+        self.ou_noise_prev = 0
 
-    def choose_action(self, state):
+    def NormalActionNoise(self, mu, sigma):
+        return torch.normal(mean=mu, std=sigma)
+
+    def OrnsteinUhlenbeckActionNoise(self, mu, sigma, theta=0.15, dt=1e-2):
+        ou_noise = (
+            self.ou_noise_prev
+            + theta * (mu - self.ou_noise_prev) * dt
+            + sigma * torch.sqrt(torch.tensor(dt)) * torch.normal(mean=mu, std=sigma)
+        )
+        self.ou_noise_prev = ou_noise
+        return ou_noise
+
+    def choose_action(
+        self, state, loop, param_noise_scale, param_noise=True, action_noise_type=None
+    ):
         state = torch.FloatTensor(state).unsqueeze(0).to(device)
-        with torch.no_grad():
-            action = self.actor(state)
-        action = action.squeeze().detach().cpu().numpy()
 
-        return action
+        with torch.no_grad():
+            output_no_noise = (
+                self.actor(state).squeeze().cpu().numpy()
+            )  # Forward pass without noise
+
+        # Add parameter noise
+        if param_noise and (loop == 0):
+            with torch.no_grad():
+                for param in self.actor.parameters():
+                    param.add_(torch.randn_like(param).to(device) * param_noise_scale)
+            output = self.actor(state).squeeze().cpu().numpy()
+        else:
+            output = output_no_noise
+
+        # Add action noise
+        if action_noise_type == "gs":
+            output_noise = output + self.NormalActionNoise(0, 0.05)  # Gaussian noise
+        elif action_noise_type == "ou":
+            output_noise = output + self.OrnsteinUhlenbeckActionNoise(
+                0, 0.15, 0.2, 0.01
+            )  # OU noise
+        elif action_noise_type == "None":
+            output_noise = output
+
+        return output_noise, output_no_noise
 
     def learn(self):
         tree_index, bt, ISWeight = self.memory.sample(BATCH_SIZE)
@@ -265,6 +301,8 @@ def run_ddpg():
 
     mu1 = 0
     sigma1 = 0.06
+    threshold = 0.2
+    factor = 1.01
     Prius = Prius_model()
     for i in range(MAX_EPISODES):
         path = "Data_Standard Driving Cycles/Prius_source_data"
@@ -307,18 +345,25 @@ def run_ddpg():
         s[1] = (car_a - (-1.6114)) / (1.3034 - (-1.6114))
         s[2] = SOC
 
+        action_noise_type = "None"
         param_noise_scale = np.random.normal(mu1, sigma1)
-        # param_noise_scale = 0
 
         for j in range(car_spd_one.shape[1] - 1):
             # print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
-            action = ddpg.choose_action(s)
+            action, action_no_noise = ddpg.choose_action(
+                s, j, param_noise_scale, False, action_noise_type
+            )
+            adaptive_policy_distance = np.sqrt(
+                np.mean(np.square(action - action_no_noise))
+            )
+            if adaptive_policy_distance > threshold:
+                param_noise_scale = param_noise_scale / factor
+            else:
+                param_noise_scale = param_noise_scale * factor
 
-            if param_noise_scale > 0 and j == 0:
-                param_noise = np.random.normal(0, param_noise_scale)
-                action = np.clip(action + param_noise, -a_bound, a_bound)
+            a = np.clip(action, 0, 1)
 
-            Eng_pwr_opt = (action.item() + a_bound) * 56000
+            Eng_pwr_opt = a * 56000
 
             out, cost, I = Prius.run(car_spd, car_a, Eng_pwr_opt, SOC)
             P_req_list.append(float(out["P_req"]))
@@ -395,7 +440,7 @@ def run_ddpg():
                     / 0.72
                 )
                 cost_all_list.append(cost_all)
-                writer.add_scalar("Reward", -(ep_reward_all / 100), i)
+                writer.add_scalar("Reward", ep_reward_all, i)
                 writer.add_scalar("Engine Cost", cost_Engine, i)
                 writer.add_scalar("cost_all", cost_all, i)
                 print(
