@@ -15,7 +15,7 @@ time_string = now.strftime("%Y-%m-%d_%H-%M-%S")
 log_dir = os.path.join("runs", time_string)
 writer = SummaryWriter(log_dir=log_dir)
 
-MAX_EPISODES = 1000
+MAX_EPISODES = 100
 LR_A = 0.001
 LR_C = 0.001
 GAMMA = 0.9
@@ -349,7 +349,7 @@ def run_ddpg():
         param_noise_scale = np.random.normal(mu1, sigma1)
 
         for j in range(car_spd_one.shape[1] - 1):
-            # print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
+            print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
             action, action_no_noise = ddpg.choose_action(
                 s, j, param_noise_scale, False, action_noise_type
             )
