@@ -8,6 +8,7 @@ import scipy.io as scio
 from Prius_model_new import Prius_model
 from torch.utils.tensorboard import SummaryWriter
 import datetime
+import pandas as pd
 
 device = torch.device("cuda")
 now = datetime.datetime.now()
@@ -15,7 +16,7 @@ time_string = now.strftime("%Y-%m-%d_%H-%M-%S")
 log_dir = os.path.join("runs", time_string)
 writer = SummaryWriter(log_dir=log_dir)
 
-MAX_EPISODES = 1000
+MAX_EPISODES = 10
 LR_A = 0.001
 LR_C = 0.001
 GAMMA = 0.9
@@ -77,16 +78,18 @@ class DDPG:
         self.ou_noise_prev = 0
 
     def NormalActionNoise(self, mu, sigma):
-        return torch.normal(mean=mu, std=sigma)
+        return (torch.randn(1) * sigma + mu).item()
 
     def OrnsteinUhlenbeckActionNoise(self, mu, sigma, theta=0.15, dt=1e-2):
         ou_noise = (
             self.ou_noise_prev
             + theta * (mu - self.ou_noise_prev) * dt
-            + sigma * torch.sqrt(torch.tensor(dt)) * torch.normal(mean=mu, std=sigma)
+            + sigma
+            * torch.sqrt(torch.tensor(dt))
+            * (torch.randn(size=(1,)) * sigma + mu)
         )
         self.ou_noise_prev = ou_noise
-        return ou_noise
+        return ou_noise.item()
 
     def choose_action(
         self, state, loop, param_noise_scale, param_noise=True, action_noise_type=None
@@ -120,6 +123,8 @@ class DDPG:
         return output_noise, output_no_noise
 
     def learn(self):
+        self.actor.train()
+        self.critic.train()
         tree_index, bt, ISWeight = self.memory.sample(BATCH_SIZE)
         bs = torch.FloatTensor(bt[:, : self.state_dim]).to(device)
         ba = torch.FloatTensor(
@@ -165,6 +170,14 @@ class DDPG:
     def savemodel(self):
         torch.save(self.actor.state_dict(), "Checkpoints/source/actor_model.pt")
         torch.save(self.critic.state_dict(), "Checkpoints/source/critic_model.pt")
+    def loadmodel(self):
+        self.actor.load_state_dict(torch.load("Checkpoints/source/actor_model.pt"))
+        self.actor.eval()
+
+        self.critic.load_state_dict(torch.load("Checkpoints/source/critic_model.pt"))
+        self.critic.eval()
+
+
 
 
 class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
@@ -319,6 +332,7 @@ def run_ddpg():
         ep_reward_all = 0
         step_episode += 1
         SOC_data = []
+        action_data = []
         P_req_list = []
         Eng_spd_list = []
         Eng_trq_list = []
@@ -349,7 +363,7 @@ def run_ddpg():
         param_noise_scale = np.random.normal(mu1, sigma1)
 
         for j in range(car_spd_one.shape[1] - 1):
-            # print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
+            print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
             action, action_no_noise = ddpg.choose_action(
                 s, j, param_noise_scale, False, action_noise_type
             )
@@ -360,7 +374,7 @@ def run_ddpg():
                 param_noise_scale = param_noise_scale / factor
             else:
                 param_noise_scale = param_noise_scale * factor
-
+            action_data.append(action)
             a = np.clip(action, 0, 1)
 
             Eng_pwr_opt = a * 56000
@@ -451,18 +465,148 @@ def run_ddpg():
                     " SOC-final: %.3f" % SOC,
                 )
 
+
         ddpg.savemodel()
+
     writer.close()
-    SOC_final_arr = np.array(SOC_final_list)
-    np.savetxt("./soc.txt", SOC_final_arr)
-    cost_Engine_arr = np.array(cost_Engine_list)
-    np.savetxt("./cost_Engine.txt", cost_Engine_arr)
-    cost_all_arr = np.array(cost_all_list)
-    np.savetxt("./cost_all.txt", cost_all_arr)
-    mean_reward_arr = np.array(mean_reward_list)
-    np.savetxt("./mean_reward.txt", mean_reward_arr)
-    std_reward_arr = np.array(std_reward_list)
-    np.savetxt("./std_reward.txt", std_reward_arr)
 
 
-run_ddpg()
+
+
+def test_ddpg():
+    s_dim = 3
+    a_dim = 1
+    a_bound = 1
+    ddpg = DDPG(s_dim, a_dim, a_bound, writer)
+    ddpg.loadmodel()
+
+    mu1 = 0
+    sigma1 = 0.06
+    threshold = 0.2
+    factor = 1.01
+    Prius = Prius_model()
+
+    path = "Data_Standard Driving Cycles/Prius_source_data"
+    path_list = os.listdir(path)
+    random_data = np.random.randint(0, len(path_list))
+    base_data = path_list[random_data]
+    data = scio.loadmat(path + "/" + base_data)
+    car_spd_one = data["speed_vector"]
+
+    SOC = 0.65
+    ep_reward = 0
+    ep_reward_all = 0
+    SOC_data = []
+    action_data = []
+    P_req_list = []
+    Eng_spd_list = []
+    Eng_trq_list = []
+    Eng_pwr_list = []
+    Eng_pwr_opt_list = []
+    Gen_spd_list = []
+    Gen_trq_list = []
+    Gen_pwr_list = []
+    Mot_spd_list = []
+    Mot_trq_list = []
+    Mot_pwr_list = []
+    Batt_pwr_list = []
+    inf_batt_list = []
+    inf_batt_one_list = []
+    Reward_list = []
+    Reward_list_all = []
+    T_list = []
+    Mot_eta_list = []
+    Gen_eta_list = []
+    car_spd = car_spd_one[:, 0]
+    car_a = car_spd_one[:, 0] - 0
+    s = np.zeros(s_dim)
+    s[0] = car_spd / 24.1683
+    s[1] = (car_a - (-1.6114)) / (1.3034 - (-1.6114))
+    s[2] = SOC
+
+    action_noise_type = "None"
+    param_noise_scale = np.random.normal(mu1, sigma1)
+
+    for j in range(car_spd_one.shape[1] - 1):
+        print(str(j) + "/", car_spd_one.shape[1])
+        action, action_no_noise = ddpg.choose_action(
+            s, j, param_noise_scale, False, action_noise_type
+        )
+        adaptive_policy_distance = np.sqrt(
+            np.mean(np.square(action - action_no_noise))
+        )
+        if adaptive_policy_distance > threshold:
+            param_noise_scale = param_noise_scale / factor
+        else:
+            param_noise_scale = param_noise_scale * factor
+        
+        a = np.clip(action, 0, 1)
+        action_data.append(a)
+        Eng_pwr_opt = a * 56000
+
+        out, cost, I = Prius.run(car_spd, car_a, Eng_pwr_opt, SOC)
+        P_req_list.append(float(out["P_req"]))
+        Eng_spd_list.append(float(out["Eng_spd"]))
+        Eng_trq_list.append(float(out["Eng_trq"]))
+        Eng_pwr_list.append(float(out["Eng_pwr"]))
+        Eng_pwr_opt_list.append(float(out["Eng_pwr_opt"]))
+        Mot_spd_list.append(float(out["Mot_spd"]))
+        Mot_trq_list.append(float(out["Mot_trq"]))
+        Mot_pwr_list.append(float(out["Mot_pwr"]))
+        Gen_spd_list.append(float(out["Gen_spd"]))
+        Gen_trq_list.append(float(out["Gen_trq"]))
+        Gen_pwr_list.append(float(out["Gen_pwr"]))
+        Batt_pwr_list.append(float(out["Batt_pwr"]))
+        inf_batt_list.append(int(out["inf_batt"]))
+        inf_batt_one_list.append(int(out["inf_batt_one"]))
+        Mot_eta_list.append(float(out["Mot_eta"]))
+        Gen_eta_list.append(float(out["Gen_eta"]))
+        T_list.append(float(out["T"]))
+        SOC_new = float(out["SOC"])
+        SOC_data.append(SOC_new)
+        cost = float(cost)
+        r = -cost
+        ep_reward += r
+        Reward_list.append(r)
+
+        if SOC_new < 0.6 or SOC_new > 0.85:
+            r = -((350 * ((0.6 - SOC_new) ** 2)) + cost)
+
+        car_spd = car_spd_one[:, j + 1]
+        car_a = car_spd_one[:, j + 1] - car_spd_one[:, j]
+        s_ = np.zeros(s_dim)
+        s_[0] = car_spd / 24.1683
+        s_[1] = (car_a - (-1.6114)) / (1.3034 - (-1.6114))
+        s_[2] = SOC_new
+        s = s_
+        ep_reward_all += r
+        Reward_list_all.append(r)
+
+        SOC = SOC_new
+    with pd.ExcelWriter("output.xlsx") as data_writer:
+        pd.DataFrame(P_req_list).to_excel(data_writer, sheet_name=" P_req_list", index=False)
+        pd.DataFrame(Eng_spd_list).to_excel(data_writer, sheet_name="Eng_spd_list", index=False)
+        pd.DataFrame(Eng_trq_list).to_excel(data_writer, sheet_name="Eng_trq_list", index=False)
+        pd.DataFrame(Eng_pwr_list).to_excel(data_writer, sheet_name="Eng_pwr_list", index=False)
+        pd.DataFrame(Eng_pwr_opt_list).to_excel(data_writer, sheet_name="Eng_pwr_opt_list", index=False)
+        pd.DataFrame(Mot_spd_list).to_excel(data_writer, sheet_name="Mot_spd_list", index=False)
+        pd.DataFrame(Mot_trq_list).to_excel(data_writer, sheet_name="Mot_trq_list", index=False)
+        pd.DataFrame(Mot_pwr_list).to_excel(data_writer, sheet_name="Mot_pwr_list", index=False)
+        pd.DataFrame(Gen_spd_list).to_excel(data_writer, sheet_name="Gen_spd_list", index=False)
+        pd.DataFrame(Gen_trq_list).to_excel(data_writer, sheet_name="Gen_trq_list", index=False)
+        pd.DataFrame(Gen_pwr_list).to_excel(data_writer, sheet_name="Gen_pwr_list", index=False)
+        pd.DataFrame(Batt_pwr_list).to_excel(data_writer, sheet_name="Batt_pwr_list", index=False)
+        pd.DataFrame(inf_batt_list).to_excel(data_writer, sheet_name="inf_batt_list", index=False)
+        pd.DataFrame(inf_batt_one_list).to_excel(data_writer, sheet_name="inf_batt_one_list", index=False)
+        pd.DataFrame(Mot_eta_list).to_excel( data_writer, sheet_name="Mot_eta_list", index=False)
+        pd.DataFrame(Gen_eta_list).to_excel(data_writer, sheet_name="Gen_eta_list", index=False)
+        pd.DataFrame(T_list).to_excel(data_writer, sheet_name="T_list", index=False)
+        pd.DataFrame(action_data).to_excel(data_writer, sheet_name="action_data", index=False)
+        pd.DataFrame(Reward_list).to_excel(data_writer, sheet_name="Reward_list", index=False)
+        pd.DataFrame(Reward_list_all).to_excel(data_writer, sheet_name="Reward_list_all", index=False)
+        pd.DataFrame(SOC_data).to_excel(data_writer, sheet_name="SOC_data", index=False)
+
+
+
+#run_ddpg()
+test_ddpg()
