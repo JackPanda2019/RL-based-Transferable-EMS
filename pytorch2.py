@@ -16,7 +16,7 @@ time_string = now.strftime("%Y-%m-%d_%H-%M-%S")
 log_dir = os.path.join("runs", time_string)
 writer = SummaryWriter(log_dir=log_dir)
 
-MAX_EPISODES = 10
+MAX_EPISODES = 200
 LR_A = 0.001
 LR_C = 0.001
 GAMMA = 0.9
@@ -92,7 +92,7 @@ class DDPG:
         return ou_noise.item()
 
     def choose_action(
-        self, state, loop, param_noise_scale, param_noise=True, action_noise_type=None
+        self, state, loop, param_noise_scale, param_noise=False, action_noise_type=None
     ):
         state = torch.FloatTensor(state).unsqueeze(0).to(device)
 
@@ -112,7 +112,7 @@ class DDPG:
 
         # Add action noise
         if action_noise_type == "gs":
-            output_noise = output + self.NormalActionNoise(0, 0.05)  # Gaussian noise
+            output_noise = output + self.NormalActionNoise(0, 0.15)  # Gaussian noise
         elif action_noise_type == "ou":
             output_noise = output + self.OrnsteinUhlenbeckActionNoise(
                 0, 0.15, 0.2, 0.01
@@ -358,12 +358,14 @@ def run_ddpg():
         s[0] = car_spd / 24.1683
         s[1] = (car_a - (-1.6114)) / (1.3034 - (-1.6114))
         s[2] = SOC
-
-        action_noise_type = "None"
+        if total_step > MEMORY_CAPACITY:
+            action_noise_type = "None"
+        else:
+            action_noise_type = "gs"
         param_noise_scale = np.random.normal(mu1, sigma1)
 
         for j in range(car_spd_one.shape[1] - 1):
-            print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
+            #print(str(i) + " ---> " + str(j) + "/", car_spd_one.shape[1])
             action, action_no_noise = ddpg.choose_action(
                 s, j, param_noise_scale, False, action_noise_type
             )
@@ -375,6 +377,7 @@ def run_ddpg():
             else:
                 param_noise_scale = param_noise_scale * factor
             action_data.append(action)
+            #print("action: ", action)
             a = np.clip(action, 0, 1)
 
             Eng_pwr_opt = a * 56000
@@ -416,7 +419,7 @@ def run_ddpg():
             ddpg.store_transition(s, action, r, s_)
             # print(total_step)
             if total_step > MEMORY_CAPACITY:
-                # if total_step > 0:
+            #if total_step > 1:
                 # print("learn start")
                 ddpg.learn()
 
@@ -461,7 +464,7 @@ def run_ddpg():
                     "Episode:",
                     i,
                     " cost_Engine: %.3f" % cost_Engine,
-                    " reward: %.3f" % -(ep_reward_all / 100),
+                    " reward: %.3f" % (ep_reward_all),
                     " SOC-final: %.3f" % SOC,
                 )
 
@@ -485,7 +488,7 @@ def test_ddpg():
     threshold = 0.2
     factor = 1.01
     Prius = Prius_model()
-
+    cost_sum = 0
     path = "Data_Standard Driving Cycles/Prius_source_data"
     path_list = os.listdir(path)
     random_data = np.random.randint(0, len(path_list))
@@ -544,6 +547,7 @@ def test_ddpg():
         action_data.append(a)
         Eng_pwr_opt = a * 56000
 
+
         out, cost, I = Prius.run(car_spd, car_a, Eng_pwr_opt, SOC)
         P_req_list.append(float(out["P_req"]))
         Eng_spd_list.append(float(out["Eng_spd"]))
@@ -566,6 +570,7 @@ def test_ddpg():
         SOC_data.append(SOC_new)
         cost = float(cost)
         r = -cost
+        cost_sum += cost
         ep_reward += r
         Reward_list.append(r)
 
@@ -584,11 +589,15 @@ def test_ddpg():
 
         SOC = SOC_new
     with pd.ExcelWriter("output.xlsx") as data_writer:
+        pd.DataFrame(Eng_pwr_opt_list).to_excel(data_writer, sheet_name="Eng_pwr_opt_list", index=False)
+        pd.DataFrame(action_data).to_excel(data_writer, sheet_name="action_data", index=False)
+        pd.DataFrame(Reward_list).to_excel(data_writer, sheet_name="Reward_list", index=False)
+        pd.DataFrame(Reward_list_all).to_excel(data_writer, sheet_name="Reward_list_all", index=False)
+        pd.DataFrame(SOC_data).to_excel(data_writer, sheet_name="SOC_data", index=False)
         pd.DataFrame(P_req_list).to_excel(data_writer, sheet_name=" P_req_list", index=False)
         pd.DataFrame(Eng_spd_list).to_excel(data_writer, sheet_name="Eng_spd_list", index=False)
         pd.DataFrame(Eng_trq_list).to_excel(data_writer, sheet_name="Eng_trq_list", index=False)
         pd.DataFrame(Eng_pwr_list).to_excel(data_writer, sheet_name="Eng_pwr_list", index=False)
-        pd.DataFrame(Eng_pwr_opt_list).to_excel(data_writer, sheet_name="Eng_pwr_opt_list", index=False)
         pd.DataFrame(Mot_spd_list).to_excel(data_writer, sheet_name="Mot_spd_list", index=False)
         pd.DataFrame(Mot_trq_list).to_excel(data_writer, sheet_name="Mot_trq_list", index=False)
         pd.DataFrame(Mot_pwr_list).to_excel(data_writer, sheet_name="Mot_pwr_list", index=False)
@@ -600,13 +609,10 @@ def test_ddpg():
         pd.DataFrame(inf_batt_one_list).to_excel(data_writer, sheet_name="inf_batt_one_list", index=False)
         pd.DataFrame(Mot_eta_list).to_excel( data_writer, sheet_name="Mot_eta_list", index=False)
         pd.DataFrame(Gen_eta_list).to_excel(data_writer, sheet_name="Gen_eta_list", index=False)
-        pd.DataFrame(T_list).to_excel(data_writer, sheet_name="T_list", index=False)
-        pd.DataFrame(action_data).to_excel(data_writer, sheet_name="action_data", index=False)
-        pd.DataFrame(Reward_list).to_excel(data_writer, sheet_name="Reward_list", index=False)
-        pd.DataFrame(Reward_list_all).to_excel(data_writer, sheet_name="Reward_list_all", index=False)
-        pd.DataFrame(SOC_data).to_excel(data_writer, sheet_name="SOC_data", index=False)
+        pd.DataFrame(T_list).to_excel(data_writer, sheet_name="T_list", index=False)   
+    print("  reward:", ep_reward_all, "  cost_sum:", cost_sum, "  SOC:", SOC)
 
 
 
-#run_ddpg()
+run_ddpg()
 test_ddpg()
