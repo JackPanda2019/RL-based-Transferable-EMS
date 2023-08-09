@@ -13,6 +13,7 @@ import pandas as pd
 device = torch.device("cuda")
 now = datetime.datetime.now()
 time_string = now.strftime("%Y-%m-%d_%H-%M-%S")
+print(time_string)
 log_dir = os.path.join("runs", time_string)
 writer = SummaryWriter(log_dir=log_dir)
 
@@ -25,6 +26,8 @@ MEMORY_CAPACITY = 50000
 BATCH_SIZE = 64
 RENDER = False
 
+first_noise = "gs"
+second_noise = "gs"
 
 class Actor(nn.Module):
     def __init__(self, input_dim, output_dim, action_bound):
@@ -112,7 +115,7 @@ class DDPG:
 
         # Add action noise
         if action_noise_type == "gs":
-            output_noise = output + self.NormalActionNoise(0, 0.15)  # Gaussian noise
+            output_noise = output + self.NormalActionNoise(0, 0.05)  # Gaussian noise
         elif action_noise_type == "ou":
             output_noise = output + self.OrnsteinUhlenbeckActionNoise(
                 0, 0.15, 0.2, 0.01
@@ -334,6 +337,7 @@ def run_ddpg():
         SOC_data = []
         action_data = []
         P_req_list = []
+        P_out_list = []
         Eng_spd_list = []
         Eng_trq_list = []
         Eng_pwr_list = []
@@ -359,9 +363,9 @@ def run_ddpg():
         s[1] = (car_a - (-1.6114)) / (1.3034 - (-1.6114))
         s[2] = SOC
         if total_step > MEMORY_CAPACITY:
-            action_noise_type = "None"
+            action_noise_type = first_noise
         else:
-            action_noise_type = "gs"
+            action_noise_type = second_noise
         param_noise_scale = np.random.normal(mu1, sigma1)
 
         for j in range(car_spd_one.shape[1] - 1):
@@ -384,6 +388,7 @@ def run_ddpg():
 
             out, cost, I = Prius.run(car_spd, car_a, Eng_pwr_opt, SOC)
             P_req_list.append(float(out["P_req"]))
+            P_out_list.append(float(out["P_out"]))
             Eng_spd_list.append(float(out["Eng_spd"]))
             Eng_trq_list.append(float(out["Eng_trq"]))
             Eng_pwr_list.append(float(out["Eng_pwr"]))
@@ -403,12 +408,12 @@ def run_ddpg():
             SOC_new = float(out["SOC"])
             SOC_data.append(SOC_new)
             cost = float(cost)
-            r = -cost
+            r = 15-cost
             ep_reward += r
             Reward_list.append(r)
 
             if SOC_new < 0.6 or SOC_new > 0.85:
-                r = -((350 * ((0.6 - SOC_new) ** 2)) + cost)
+                r = 15-((350 * ((0.6 - SOC_new) ** 2)) + cost)
 
             car_spd = car_spd_one[:, j + 1]
             car_a = car_spd_one[:, j + 1] - car_spd_one[:, j]
@@ -460,16 +465,11 @@ def run_ddpg():
                 writer.add_scalar("Reward", ep_reward_all, i)
                 writer.add_scalar("Engine Cost", cost_Engine, i)
                 writer.add_scalar("cost_all", cost_all, i)
-                print(
-                    "Episode:",
-                    i,
-                    " cost_Engine: %.3f" % cost_Engine,
-                    " reward: %.3f" % (ep_reward_all),
-                    " SOC-final: %.3f" % SOC,
-                )
+                print("Episode:",i," cost_Engine: %.3f" % cost_Engine," reward: %.3f" % (ep_reward_all)," SOC-final: %.3f" % SOC,)
 
 
         ddpg.savemodel()
+
 
     writer.close()
 
@@ -502,6 +502,7 @@ def test_ddpg():
     SOC_data = []
     action_data = []
     P_req_list = []
+    P_out_list = []
     Eng_spd_list = []
     Eng_trq_list = []
     Eng_pwr_list = []
@@ -531,7 +532,7 @@ def test_ddpg():
     param_noise_scale = np.random.normal(mu1, sigma1)
 
     for j in range(car_spd_one.shape[1] - 1):
-        print(str(j) + "/", car_spd_one.shape[1])
+        #print(str(j) + "/", car_spd_one.shape[1])
         action, action_no_noise = ddpg.choose_action(
             s, j, param_noise_scale, False, action_noise_type
         )
@@ -550,6 +551,7 @@ def test_ddpg():
 
         out, cost, I = Prius.run(car_spd, car_a, Eng_pwr_opt, SOC)
         P_req_list.append(float(out["P_req"]))
+        P_out_list.append(float(out["P_out"]))
         Eng_spd_list.append(float(out["Eng_spd"]))
         Eng_trq_list.append(float(out["Eng_trq"]))
         Eng_pwr_list.append(float(out["Eng_pwr"]))
@@ -594,7 +596,8 @@ def test_ddpg():
         pd.DataFrame(Reward_list).to_excel(data_writer, sheet_name="Reward_list", index=False)
         pd.DataFrame(Reward_list_all).to_excel(data_writer, sheet_name="Reward_list_all", index=False)
         pd.DataFrame(SOC_data).to_excel(data_writer, sheet_name="SOC_data", index=False)
-        pd.DataFrame(P_req_list).to_excel(data_writer, sheet_name=" P_req_list", index=False)
+        pd.DataFrame(P_req_list).to_excel(data_writer, sheet_name="P_req_list", index=False)
+        pd.DataFrame(P_out_list).to_excel(data_writer, sheet_name="P_out_list", index=False)
         pd.DataFrame(Eng_spd_list).to_excel(data_writer, sheet_name="Eng_spd_list", index=False)
         pd.DataFrame(Eng_trq_list).to_excel(data_writer, sheet_name="Eng_trq_list", index=False)
         pd.DataFrame(Eng_pwr_list).to_excel(data_writer, sheet_name="Eng_pwr_list", index=False)
@@ -611,8 +614,10 @@ def test_ddpg():
         pd.DataFrame(Gen_eta_list).to_excel(data_writer, sheet_name="Gen_eta_list", index=False)
         pd.DataFrame(T_list).to_excel(data_writer, sheet_name="T_list", index=False)   
     print("  reward:", ep_reward_all, "  cost_sum:", cost_sum, "  SOC:", SOC)
+    
 
 
 
 run_ddpg()
+print(first_noise,second_noise)
 test_ddpg()
