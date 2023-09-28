@@ -13,5 +13,10 @@ def clear_folders(folder_path):
 folder_to_clear = "runs"
 clear_folders(folder_to_clear)
 
-
+#笔记
 #%tensorboard --logdir C:\Users\hrdaweed\Desktop\RL-based-Transferable-EMS\RL-based-Transferable-EMS\runs
+
+
+#SUMO生成最佳路径duarouter -n grid.net.xml -r vehicles_only.rou.xml -o valid_routes.rou.xml
+
+#<flow id="flow1" color="1,1,0"  begin="0" end= "7200" number="1000" type="car" from="A2B2" to="C1C0">

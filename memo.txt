@@ -1,0 +1,10 @@
+
+
+
+
+
+netgenerate --grid --grid.x-number=4 --grid.y-number=4 --grid.length=400 --default.speed=16.67 --tls.guess=True --output-file=grid400.net.xml
+<route id="route1" edges="A2B2 B2C2 C2C1 C1C0"/>
+
+<vehicle id="agent" depart="590" color="1,0,0" type="car" departSpeed="max" departPos="15">
+s_[0] = car_spd / 17.67

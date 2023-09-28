@@ -1,0 +1,120 @@
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="car" maxSpeed="25" length="5.0" />
+    <flow id="A2toB3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A2B2" to="B2B3">
+    </flow>
+    <flow id="A1toA2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A1B1" to="B2A2">
+    </flow>
+    <flow id="B0toA1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B0B1" to="B1A1">
+    </flow>
+    <flow id="B3toA1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B3B2" to="B1A1">
+    </flow>
+    <flow id="C0toA1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C0C1" to="B1A1">
+    </flow>
+    <flow id="C3toA1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C3C2" to="B1A1">
+    </flow>
+    <flow id="D1toA1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D1C1" to="B1A1">
+    </flow>
+    <flow id="D2toA1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D2C2" to="B1A1">
+    </flow>
+    <flow id="A2toC3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A2B2" to="C2C3">
+    </flow>
+    <flow id="A1toB3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A1B1" to="B2B3">
+    </flow>
+    <flow id="B0toA2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B0B1" to="B2A2">
+    </flow>
+    <flow id="B3toA2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B3B2" to="B2A2">
+    </flow>
+    <flow id="C0toA2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C0C1" to="B2A2">
+    </flow>
+    <flow id="C3toA2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C3C2" to="B2A2">
+    </flow>
+    <flow id="D1toA2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D1C1" to="B2A2">
+    </flow>
+    <flow id="D2toA2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D2C2" to="B2A2">
+    </flow>
+    <flow id="A2toD2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A2B2" to="C2D2">
+    </flow>
+    <flow id="A1toC3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A1B1" to="C2C3">
+    </flow>
+    <flow id="B0toB3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B0B1" to="B2B3">
+    </flow>
+    <flow id="B3toB0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B3B2" to="B1B0">
+    </flow>
+    <flow id="C0toB0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C0C1" to="B1B0">
+    </flow>
+    <flow id="C3toB0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C3C2" to="B1B0">
+    </flow>
+    <flow id="D1toB0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D1C1" to="B1B0">
+    </flow>
+    <flow id="D2toB0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D2C2" to="B1B0">
+    </flow>
+    <flow id="A2toD1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A2B2" to="C1D1">
+    </flow>
+    <flow id="A1toD2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A1B1" to="C2D2">
+    </flow>
+    <flow id="B0toC3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B0B1" to="C2C3">
+    </flow>
+    <flow id="B3toC3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B3B2" to="C2C3">
+    </flow>
+    <flow id="C0toB3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C0C1" to="B2B3">
+    </flow>
+    <flow id="C3toB3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C3C2" to="B2B3">
+    </flow>
+    <flow id="D1toB3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D1C1" to="B2B3">
+    </flow>
+    <flow id="D2toB3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D2C2" to="B2B3">
+    </flow>
+    <flow id="A2toC0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A2B2" to="C1C0">
+    </flow>
+    <flow id="A1toD1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A1B1" to="C1D1">
+    </flow>
+    <flow id="B0toD2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B0B1" to="C2D2">
+    </flow>
+    <flow id="B3toD2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B3B2" to="C2D2">
+    </flow>
+    <flow id="C0toC3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C0C1" to="C2C3">
+    </flow>
+    <flow id="C3toC0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C3C2" to="C1C0">
+    </flow>
+    <flow id="D1toC0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D1C1" to="C1C0">
+    </flow>
+    <flow id="D2toC0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D2C2" to="C1C0">
+    </flow>
+    <flow id="A2toB0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A2B2" to="B1B0">
+    </flow>
+    <flow id="A1toC0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A1B1" to="C1C0">
+    </flow>
+    <flow id="B0toD1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B0B1" to="C1D1">
+    </flow>
+    <flow id="B3toD1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B3B2" to="C1D1">
+    </flow>
+    <flow id="C0toD2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C0C1" to="C2D2">
+    </flow>
+    <flow id="C3toD2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C3C2" to="C2D2">
+    </flow>
+    <flow id="D1toC3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D1C1" to="C2C3">
+    </flow>
+    <flow id="D2toC3" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D2C2" to="C2C3">
+    </flow>
+    <flow id="A2toA1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A2B2" to="B1A1">
+    </flow>
+    <flow id="A1toB0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="A1B1" to="B1B0">
+    </flow>
+    <flow id="B0toC0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B0B1" to="C1C0">
+    </flow>
+    <flow id="B3toC0" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="B3B2" to="C1C0">
+    </flow>
+    <flow id="C0toD1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C0C1" to="C1D1">
+    </flow>
+    <flow id="C3toD1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="C3C2" to="C1D1">
+    </flow>
+    <flow id="D1toD2" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D1C1" to="C2D2">
+    </flow>
+    <flow id="D2toD1" color="1,1,0" begin="0" end="3600" probability="0.01" type="car" from="D2C2" to="C1D1">
+    </flow>
+    <vehicle id="agent" depart="599" color="1,0,0" type="car" departSpeed="max" departPos="base">
+    <route edges= "B3B2 B2B1 B1C1 C1C2 C2B2 B2B1 B1C1 C1C2 C2B2 B2B1 B1C1 C1C2 C2B2 B2B1 B1C1 C1C2 C2B2 B2B1 B1C1 C1C2 C2B2 B2B1 B1C1 C1C2 C2B2 B2B1 B1C1 C1C2 C2B2 B2B1 B1C1 C1C2 C2B2 B2B1 B1C1 C1C2 C2B2 B2B1 B1C1 C1C2 C2B2 B2B3"/>
+    </vehicle>
+
+
+</routes>

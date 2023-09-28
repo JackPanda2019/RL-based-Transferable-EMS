@@ -408,12 +408,12 @@ def run_ddpg():
             SOC_new = float(out["SOC"])
             SOC_data.append(SOC_new)
             cost = float(cost)
-            r = 15-cost
+            r = -cost
             ep_reward += r
             Reward_list.append(r)
 
             if SOC_new < 0.6 or SOC_new > 0.85:
-                r = 15-((350 * ((0.6 - SOC_new) ** 2)) + cost)
+                r = -((350 * ((0.6 - SOC_new) ** 2)) + cost)
 
             car_spd = car_spd_one[:, j + 1]
             car_a = car_spd_one[:, j + 1] - car_spd_one[:, j]
