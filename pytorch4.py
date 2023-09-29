@@ -13,7 +13,7 @@ import traci
 
 
 #sumoCmd = ['sumo', '--random', '-c', 'simulation_config.sumocfg']
-sumoCmd = ['sumo', '-c', 'simulation_config.sumocfg']
+sumoCmd = ['sumo', '-c', 'simulation_config.sumocfg','--no-step-log']
 traci.start(sumoCmd)
 end_time = traci.simulation.getEndTime()
 print("end_time:",end_time)
@@ -363,29 +363,29 @@ def run_ddpg():
         Mot_eta_list = []
         Gen_eta_list = []
         #car_spd = car_spd_one[:, 0]
-        print("total_step:",total_step,"----------")
+        #print("total_step:",total_step,"----------")
         current_time = traci.simulation.getTime()
         #print("current_time------------------:",current_time)
         car_spd = traci.vehicle.getSpeed('agent')
         #print("car_spd------------------:",car_spd)
         car_a = traci.vehicle.getAcceleration('agent')
         #print("car_a------------------:",car_a)
-        road_id = traci.vehicle.getRoadID('agent')
+        #road_id = traci.vehicle.getRoadID('agent')
         #print("road_id------------------:",road_id)
-        lane_id = road_id + '_0'
+        #lane_id = road_id + '_0'
         #print("lane_id------------------:",lane_id)
-        occupancy = traci.lane.getLastStepOccupancy(lane_id)
+        #occupancy = traci.lane.getLastStepOccupancy(lane_id)
         #print("occupancy------------------:",occupancy)
-        next_tls_info = traci.vehicle.getNextTLS('agent')
-        tls_id, tls_index, dist, tls_state = next_tls_info[0]
+        #next_tls_info = traci.vehicle.getNextTLS('agent')
+        #tls_id, tls_index, dist, tls_state = next_tls_info[0]
         #print("tls_id------------------:",tls_id)
         #print("tls_index------------------:",tls_index)
         #print("dist------------------:",dist)
         #print("tls_state------------------:",tls_state)
-        if tls_state == "r" or tls_state == "y":
-            tls_state = 1
-        else:
-            tls_state = 0
+        #if tls_state == "r" or tls_state == "y":
+        #    tls_state = 1
+        #else:
+        #    tls_state = 0
 
 
         #car_a = car_spd_one[:, 0] - 0
@@ -415,24 +415,24 @@ def run_ddpg():
             Eng_pwr_opt = a * 56000
 
             out, cost, I = Prius.run(car_spd, car_a, Eng_pwr_opt, SOC)
-            P_req_list.append(float(out["P_req"]))
-            P_out_list.append(float(out["P_out"]))
-            Eng_spd_list.append(float(out["Eng_spd"]))
-            Eng_trq_list.append(float(out["Eng_trq"]))
-            Eng_pwr_list.append(float(out["Eng_pwr"]))
-            Eng_pwr_opt_list.append(float(out["Eng_pwr_opt"]))
-            Mot_spd_list.append(float(out["Mot_spd"]))
-            Mot_trq_list.append(float(out["Mot_trq"]))
-            Mot_pwr_list.append(float(out["Mot_pwr"]))
-            Gen_spd_list.append(float(out["Gen_spd"]))
-            Gen_trq_list.append(float(out["Gen_trq"]))
-            Gen_pwr_list.append(float(out["Gen_pwr"]))
-            Batt_pwr_list.append(float(out["Batt_pwr"]))
-            inf_batt_list.append(int(out["inf_batt"]))
-            inf_batt_one_list.append(int(out["inf_batt_one"]))
-            Mot_eta_list.append(float(out["Mot_eta"]))
-            Gen_eta_list.append(float(out["Gen_eta"]))
-            T_list.append(float(out["T"]))
+            #P_req_list.append(float(out["P_req"]))
+            #P_out_list.append(float(out["P_out"]))
+            #Eng_spd_list.append(float(out["Eng_spd"]))
+            #Eng_trq_list.append(float(out["Eng_trq"]))
+            #Eng_pwr_list.append(float(out["Eng_pwr"]))
+            #Eng_pwr_opt_list.append(float(out["Eng_pwr_opt"]))
+            #Mot_spd_list.append(float(out["Mot_spd"]))
+            #Mot_trq_list.append(float(out["Mot_trq"]))
+            #Mot_pwr_list.append(float(out["Mot_pwr"]))
+            #Gen_spd_list.append(float(out["Gen_spd"]))
+            #Gen_trq_list.append(float(out["Gen_trq"]))
+            #Gen_pwr_list.append(float(out["Gen_pwr"]))
+            #Batt_pwr_list.append(float(out["Batt_pwr"]))
+            #inf_batt_list.append(int(out["inf_batt"]))
+            #inf_batt_one_list.append(int(out["inf_batt_one"]))
+            #Mot_eta_list.append(float(out["Mot_eta"]))
+            #Gen_eta_list.append(float(out["Gen_eta"]))
+            #T_list.append(float(out["T"]))
             SOC_new = float(out["SOC"])
             SOC_data.append(SOC_new)
             cost = float(cost)
@@ -448,18 +448,18 @@ def run_ddpg():
 
             car_spd = traci.vehicle.getSpeed('agent')
             car_a = traci.vehicle.getAcceleration('agent')
-            road_id = traci.vehicle.getRoadID('agent')
-            lane_id = road_id + '_0'
-            occupancy = traci.lane.getLastStepOccupancy(lane_id)
-            next_tls_info = traci.vehicle.getNextTLS('agent')
-            tls_id, tls_index, dist, tls_state = next_tls_info[0]
-            if tls_state == "r" or tls_state == "y":
-                tls_state = 1
-            else:
-                tls_state = 0
+            #road_id = traci.vehicle.getRoadID('agent')
+            #lane_id = road_id + '_0'
+            #occupancy = traci.lane.getLastStepOccupancy(lane_id)
+            #next_tls_info = traci.vehicle.getNextTLS('agent')
+            #tls_id, tls_index, dist, tls_state = next_tls_info[0]
+            #if tls_state == "r" or tls_state == "y":
+            #    tls_state = 1
+            #else:
+            #    tls_state = 0
 
 
-
+            
             s_ = np.zeros(s_dim)
             s_[0] = car_spd / 17.67
             s_[1] = (car_a - (-4.5)) / (2.59 - (-4.5))
@@ -514,11 +514,10 @@ def run_ddpg():
                 writer.add_scalar("Reward", ep_reward_all, i)
                 writer.add_scalar("Engine Cost", cost_Engine, i)
                 writer.add_scalar("cost_all", cost_all, i)
-                print(" ")
                 print("Episode:",i," cost_Engine: %.3f" % cost_Engine," reward: %.3f" % (ep_reward_all)," SOC-final: %.3f" % SOC,)
                 
         traci.close()
-        print("---------------------------------------------------------------------------------------------------------------")
+        #print("---------------------------------------------------------------------------------------------------------------")
     ddpg.savemodel()
 
 

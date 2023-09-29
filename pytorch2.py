@@ -27,7 +27,7 @@ BATCH_SIZE = 64
 RENDER = False
 
 first_noise = "gs"
-second_noise = "gs"
+second_noise = "None"
 
 class Actor(nn.Module):
     def __init__(self, input_dim, output_dim, action_bound):
@@ -363,9 +363,9 @@ def run_ddpg():
         s[1] = (car_a - (-1.6114)) / (1.3034 - (-1.6114))
         s[2] = SOC
         if total_step > MEMORY_CAPACITY:
-            action_noise_type = first_noise
-        else:
             action_noise_type = second_noise
+        else:
+            action_noise_type = first_noise
         param_noise_scale = np.random.normal(mu1, sigma1)
 
         for j in range(car_spd_one.shape[1] - 1):

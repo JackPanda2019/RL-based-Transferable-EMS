@@ -12,8 +12,8 @@ import pandas as pd
 import traci
 
 
-#sumoCmd = ['sumo', '--random', '-c', 'simulation_config.sumocfg']
-sumoCmd = ['sumo', '-c', 'simulation_config.sumocfg']
+sumoCmd = ['sumo', '--random', '-c', 'simulation_config.sumocfg']
+#sumoCmd = ['sumo', '-c', 'simulation_config.sumocfg']
 traci.start(sumoCmd)
 end_time = traci.simulation.getEndTime()
 print("end_time:",end_time)
@@ -415,24 +415,24 @@ def run_ddpg():
             Eng_pwr_opt = a * 56000
 
             out, cost, I = Prius.run(car_spd, car_a, Eng_pwr_opt, SOC)
-            P_req_list.append(float(out["P_req"]))
-            P_out_list.append(float(out["P_out"]))
-            Eng_spd_list.append(float(out["Eng_spd"]))
-            Eng_trq_list.append(float(out["Eng_trq"]))
-            Eng_pwr_list.append(float(out["Eng_pwr"]))
-            Eng_pwr_opt_list.append(float(out["Eng_pwr_opt"]))
-            Mot_spd_list.append(float(out["Mot_spd"]))
-            Mot_trq_list.append(float(out["Mot_trq"]))
-            Mot_pwr_list.append(float(out["Mot_pwr"]))
-            Gen_spd_list.append(float(out["Gen_spd"]))
-            Gen_trq_list.append(float(out["Gen_trq"]))
-            Gen_pwr_list.append(float(out["Gen_pwr"]))
-            Batt_pwr_list.append(float(out["Batt_pwr"]))
-            inf_batt_list.append(int(out["inf_batt"]))
-            inf_batt_one_list.append(int(out["inf_batt_one"]))
-            Mot_eta_list.append(float(out["Mot_eta"]))
-            Gen_eta_list.append(float(out["Gen_eta"]))
-            T_list.append(float(out["T"]))
+            #P_req_list.append(float(out["P_req"]))
+            #P_out_list.append(float(out["P_out"]))
+            #Eng_spd_list.append(float(out["Eng_spd"]))
+            #Eng_trq_list.append(float(out["Eng_trq"]))
+            #Eng_pwr_list.append(float(out["Eng_pwr"]))
+            #Eng_pwr_opt_list.append(float(out["Eng_pwr_opt"]))
+            #Mot_spd_list.append(float(out["Mot_spd"]))
+            #Mot_trq_list.append(float(out["Mot_trq"]))
+            #Mot_pwr_list.append(float(out["Mot_pwr"]))
+            #Gen_spd_list.append(float(out["Gen_spd"]))
+            #Gen_trq_list.append(float(out["Gen_trq"]))
+            #Gen_pwr_list.append(float(out["Gen_pwr"]))
+            #Batt_pwr_list.append(float(out["Batt_pwr"]))
+            #inf_batt_list.append(int(out["inf_batt"]))
+            #inf_batt_one_list.append(int(out["inf_batt_one"]))
+            #Mot_eta_list.append(float(out["Mot_eta"]))
+            #Gen_eta_list.append(float(out["Gen_eta"]))
+            #T_list.append(float(out["T"]))
             SOC_new = float(out["SOC"])
             SOC_data.append(SOC_new)
             cost = float(cost)
@@ -671,7 +671,7 @@ def test_ddpg():
     
 
 
-
-run_ddpg()
 print(first_noise,second_noise)
+run_ddpg()
+
 #test_ddpg()
