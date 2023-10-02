@@ -502,35 +502,13 @@ def run_ddpg():
             cost_Engine = -(ep_reward / 0.72 / 1000)
             cost_all = -(ep_reward_all / 0.72 / 1000)
             
-            if traci.simulation.getTime() == end_time-1:
-                SOC_final_list.append(SOC)
-                mean_reward = np.mean(Reward_list_all)
-                mean_reward_list.append(mean_reward)
-                std_reward = np.std(Reward_list_all, ddof=1)
-                std_reward_list.append(std_reward)
-                cost_Engine += (
-                    (SOC < SOC_origin)
-                    * (SOC_origin - SOC)
-                    * (201.6 * 6.5)
-                    * 3600
-                    / (42600000)
-                    / 0.72
-                )
-                cost_Engine_list.append(cost_Engine)
-                #cost_Engine_100Km_list.append(cost_Engine * (100 / (total_milage)))
-                cost_all += (
-                    (SOC < SOC_origin)
-                    * (SOC_origin - SOC)
-                    * (201.6 * 6.5)
-                    * 3600
-                    / (42600000)
-                    / 0.72
-                )
-                cost_all_list.append(cost_all)
-                writer.add_scalar("Reward", ep_reward_all, i)
-                writer.add_scalar("Engine Cost", cost_Engine, i)
-                writer.add_scalar("cost_all", cost_all, i)
-                print("Episode:",i," cost_Engine: %.3f" % cost_Engine," reward: %.3f" % (ep_reward_all)," SOC-final: %.3f" % SOC,)
+        cost_Engine += ((SOC < SOC_origin)*(SOC_origin - SOC)*(201.6 * 6.5)* 3600/ (42600000)/ 0.72)
+        #cost_Engine_list.append(cost_Engine)
+        #cost_Engine_100Km_list.append(cost_Engine * (100 / (total_milage)))
+        writer.add_scalar("Reward", ep_reward_all, i)
+        writer.add_scalar("Engine Cost", cost_Engine, i)
+        writer.add_scalar("SOC-final(every episode)", SOC, i)
+        print("Episode:",i," cost_Engine: %.3f" % cost_Engine," reward: %.3f" % (ep_reward_all)," SOC-final: %.3f" % SOC,)
                 
         traci.close()
         #print("---------------------------------------------------------------------------------------------------------------")
@@ -563,6 +541,7 @@ def test_ddpg():
     for sim_step in range(601):
         traci.simulationStep()
     SOC = 0.65
+    SOC_origin = SOC
     ep_reward = 0
     ep_reward_all = 0
     SOC_data = []
@@ -641,7 +620,6 @@ def test_ddpg():
         SOC_data.append(SOC_new)
         cost = float(cost)
         r = -cost
-        cost_sum += cost
         ep_reward += r
         Reward_list.append(r)
 
@@ -672,6 +650,7 @@ def test_ddpg():
         s = s_
         ep_reward_all += r
         Reward_list_all.append(r)
+        cost_Engine = -(ep_reward / 0.72 / 1000)
 
         SOC = SOC_new
     
@@ -697,8 +676,9 @@ def test_ddpg():
         pd.DataFrame(inf_batt_one_list).to_excel(data_writer, sheet_name="inf_batt_one_list", index=False)
         pd.DataFrame(Mot_eta_list).to_excel( data_writer, sheet_name="Mot_eta_list", index=False)
         pd.DataFrame(Gen_eta_list).to_excel(data_writer, sheet_name="Gen_eta_list", index=False)
-        pd.DataFrame(T_list).to_excel(data_writer, sheet_name="T_list", index=False)   
-    print("  reward:", ep_reward_all, "  cost_sum:", cost_sum, "  SOC:", SOC)
+        pd.DataFrame(T_list).to_excel(data_writer, sheet_name="T_list", index=False) 
+    cost_Engine += ((SOC < SOC_origin)*(SOC_origin - SOC)*(201.6 * 6.5)* 3600/ (42600000)/ 0.72)  
+    print("  reward:", ep_reward_all, "  Engine_cost:", cost_Engine, "  SOC:", SOC)
     traci.close()
     
 
