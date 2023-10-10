@@ -324,7 +324,7 @@ class SumTree(object):
 def run_ddpg():
     log_dir = os.path.join("runs", time_string)
     writer = SummaryWriter(log_dir=log_dir)
-    s_dim = 5
+    s_dim = 3
     a_dim = 1
     a_bound = 1
     ddpg = DDPG(s_dim, a_dim, a_bound, writer)
@@ -408,8 +408,8 @@ def run_ddpg():
         s[0] = car_spd / 17.67
         s[1] = (car_a - (-4.5)) / (2.59 - (-4.5))
         s[2] = SOC
-        s[3] = occupancy
-        s[4] = tls_state
+        #s[3] = occupancy
+        #s[4] = tls_state
         #print("s------------------:",s)
         if total_step > MEMORY_CAPACITY:
             action_noise_type = second_noise
@@ -480,8 +480,8 @@ def run_ddpg():
             s_[0] = car_spd / 17.67
             s_[1] = (car_a - (-4.5)) / (2.59 - (-4.5))
             s_[2] = SOC_new
-            s_[3] = occupancy
-            s_[4] = tls_state
+            #s_[3] = occupancy
+            #s_[4] = tls_state
             ddpg.store_transition(s, action, r, s_)
             # print(total_step)
             if total_step > MEMORY_CAPACITY:
@@ -521,7 +521,7 @@ def run_ddpg():
 def test_ddpg():
     log_dir = os.path.join("runs_test", time_string)
     writer = SummaryWriter(log_dir=log_dir)
-    s_dim = 5
+    s_dim = 3
     a_dim = 1
     a_bound = 1
     ddpg = DDPG(s_dim, a_dim, a_bound, writer)
@@ -566,6 +566,8 @@ def test_ddpg():
     T_list = []
     Mot_eta_list = []
     Gen_eta_list = []
+    car_spd_list = []
+    car_a_list = []
     car_spd = traci.vehicle.getSpeed('agent')
     car_a = traci.vehicle.getAcceleration('agent')
     road_id = traci.vehicle.getRoadID('agent')
@@ -581,8 +583,8 @@ def test_ddpg():
     s[0] = car_spd / 17.67
     s[1] = (car_a - (-4.5)) / (2.59 - (-4.5))
     s[2] = SOC
-    s[3] = occupancy
-    s[4] = tls_state
+    #s[3] = occupancy
+    #s[4] = tls_state
     action_noise_type = "None"
     param_noise_scale = None
 
@@ -598,6 +600,8 @@ def test_ddpg():
 
 
         out, cost, I = Prius.run(car_spd, car_a, Eng_pwr_opt, SOC)
+        car_spd_list.append(car_spd)
+        car_a_list.append(car_a)
         P_req_list.append(float(out["P_req"]))
         P_out_list.append(float(out["P_out"]))
         Eng_spd_list.append(float(out["Eng_spd"]))
@@ -645,8 +649,8 @@ def test_ddpg():
         s_[0] = car_spd / 17.67
         s_[1] = (car_a - (-4.5)) / (2.59 - (-4.5))
         s_[2] = SOC_new
-        s_[3] = occupancy
-        s_[4] = tls_state
+        #s_[3] = occupancy
+        #s_[4] = tls_state
         s = s_
         ep_reward_all += r
         Reward_list_all.append(r)
@@ -655,6 +659,8 @@ def test_ddpg():
         SOC = SOC_new
     
     with pd.ExcelWriter(f"output{time_string}.xlsx") as data_writer:
+        pd.DataFrame(car_spd_list).to_excel(data_writer, sheet_name="car_spd_list", index=False)
+        pd.DataFrame(car_a_list).to_excel(data_writer, sheet_name="car_a_list", index=False)
         pd.DataFrame(Eng_pwr_opt_list).to_excel(data_writer, sheet_name="Eng_pwr_opt_list", index=False)
         pd.DataFrame(action_data).to_excel(data_writer, sheet_name="action_data", index=False)
         pd.DataFrame(Reward_list).to_excel(data_writer, sheet_name="Reward_list", index=False)
@@ -684,7 +690,7 @@ def test_ddpg():
 
 
 time_string=time_string1
-time_string="2023-10-02_13-59-06_____1"
+time_string="2023-10-02_18-10-49_____1"
 print("time_string:",time_string)
 #run_ddpg()
 print("train is done, test:")

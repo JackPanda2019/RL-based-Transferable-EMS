@@ -683,7 +683,7 @@ def test_ddpg():
     
 
 
-time_string=time_string1
+#time_string=time_string1
 time_string="2023-10-02_13-59-06_____1"
 print("time_string:",time_string)
 #run_ddpg()
